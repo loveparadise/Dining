@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="
+        http://www.springframework.org/schema/beans     
+        http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context
+        http://www.springframework.org/schema/context/spring-context-3.0.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc-3.0.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+        http://www.springframework.org/schema/aop
+        http://www.springframework.org/schema/aop/spring-aop-4.0.xsd
+        ">
+
+	<!-- 启动自动扫描该包下所有的Bean(例如@component) -->
+	<!--<context:component-scan base-package="com.loveparadise"></context:component-scan> -->
+	<context:component-scan base-package="com.loveparadise">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Repository" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Service" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Component" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+	</context:component-scan>
+
+
+	<!-- 基于注释的事务，当注释中发现@Transactional时，使用id为“transactionManager”的事务管理器 -->
+	<!-- 如果没有设置transaction-manager的值，则spring以缺省默认的事务管理器来处理事务，默认事务管理器为第一个加载的事务管理器 -->
+	<tx:annotation-driven transaction-manager="transactionManager"
+		proxy-target-class="true" />
+
+	<!-- <aop:config proxy-target-class="true" /> -->
+	<aop:config proxy-target-class="true">
+		<aop:pointcut id="serviceMethod"
+			expression="execution(public * com.loveparadise..*Service.*(..))" />
+		<!-- <aop:advisor pointcut-ref="serviceMethod" advice-ref="transactionManager" 
+			/> -->
+	</aop:config>
+
+	<!-- 静态资源访问 -->
+	<mvc:resources location="/" mapping="/error.html" />
+	<mvc:resources location="/" mapping="/WEB-INF/res/jsp/error.html" />
+	<mvc:resources location="/" mapping="/400.html" />
+	<mvc:resources location="/" mapping="/WEB-INF/res/jsp/400.html" />
+	<mvc:resources location="/" mapping="/403.html" />
+	<mvc:resources location="/" mapping="/WEB-INF/res/jsp/403.html" />
+	<mvc:resources location="/" mapping="/404.html" />
+	<mvc:resources location="/" mapping="/WEB-INF/res/jsp/404.html" />
+	<mvc:resources location="/" mapping="/500.html" />
+	<mvc:resources location="/" mapping="/WEB-INF/res/jsp/500.html" />
+	<mvc:resources location="/WEB-INF/res/img/" mapping="/res/img/**" />
+	<mvc:resources location="/WEB-INF/res/js/" mapping="/res/js/**" />
+	<mvc:resources location="/WEB-INF/res/css/" mapping="/res/css/**" />
+	<mvc:resources location="/WEB-INF/res/uploadify/" mapping="/res/uploadify/**" />
+	<mvc:resources location="/WEB-INF/assets/" mapping="/assets/**" />
+	<mvc:resources location="/WEB-INF/file/" mapping="/file/**" />
+	<mvc:resources location="/WEB-INF/uploadMenu/" mapping="/uploadMenu/**" />
+	<mvc:resources location="/WEB-INF/res/phone/" mapping="/res/phone/**" />
+	<mvc:resources location="/WEB-INF/downfile/" mapping="/downfile/**" />
+
+	<!-- 定义视图解析器 -->
+	<bean
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<property name="prefix">
+			<value>/WEB-INF/res/jsp/</value>
+		</property>
+		<property name="suffix">
+			<value>.jsp</value>
+		</property>
+	</bean>
+
+	<bean id="multipartResolver"
+		class="org.springframework.web.multipart.commons.CommonsMultipartResolver" />
+
+	<mvc:interceptors>
+		<mvc:interceptor>
+			<mvc:mapping path="/book/**" />
+			<mvc:mapping path="/user/**" />
+			<mvc:mapping path="/DingingRoom/**" />
+			<mvc:mapping path="/judgeMeal/**" />
+			<mvc:mapping path="/LimitedMealNumber/**" />
+			<mvc:mapping path="/meal/**" />
+			<mvc:mapping path="/menu/**" />
+			<mvc:mapping path="/type/**" />
+			<bean class="com.loveparadise.common.NoLoginInterceptor"></bean>
+		</mvc:interceptor>
+	</mvc:interceptors>
+	<mvc:annotation-driven />
+
+	<!-- job的配置开始 -->
+	<bean id="myJobDetail"
+		class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+		<property name="targetObject">
+			<ref bean="autoJob" />
+		</property>
+		<property name="targetMethod">
+			<value>startJob</value>
+		</property>
+	</bean>
+	<!-- job的配置结束 -->
+
+
+	<!-- 调度的配置开始 -->
+	<bean id="crontestJobTrigger"
+		class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+		<property name="jobDetail">
+			<ref bean="myJobDetail" />
+		</property>
+		<property name="cronExpression">
+			<value>10 */10 * * * ?</value>  <!-- Cron表达式“10 */1 * * * ?”意为：从10秒开始，每1分钟执行一次。0 0 0/1 * * ? -->
+		</property>
+	</bean>
+	<!-- 调度的配置结束 -->
+</beans>
